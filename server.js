@@ -16,19 +16,27 @@ const PHONE_NUMBER_ID = "YOUR_PHONE_ID";
 async function sendWhatsApp(to, message) {
   const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
 
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${WHATSAPP_TOKEN}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to: to,
-      type: "text",
-      text: { body: message }
-    })
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: to,
+        type: "text",
+        text: { body: message }
+      })
+    });
+
+    const data = await response.text();
+    console.log("WhatsApp API Response:", data);
+
+  } catch (error) {
+    console.error("WhatsApp Send Error:", error);
+  }
 }
 
 /************************************************************
