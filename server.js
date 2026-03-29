@@ -7,8 +7,8 @@ app.use(express.json());
 /************************************************************
  * 🔐 CONFIGURATION (REPLACE THESE)
  ************************************************************/
-const WHATSAPP_TOKEN = "YOUR_META_TOKEN";      // 🔴 Replace
-const PHONE_NUMBER_ID = "YOUR_PHONE_ID";       // 🔴 Replace
+const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";      // 🔴 Replace
+const PHONE_NUMBER_ID = "995087710361384";       // 🔴 Replace
 
 /************************************************************
  * 📡 SEND WHATSAPP MESSAGE (WITH FULL DEBUG)
