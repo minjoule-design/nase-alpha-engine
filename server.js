@@ -5,18 +5,20 @@ const app = express();
 app.use(express.json());
 
 /************************************************************
- * 🔐 CONFIG
+ * 🔐 CONFIGURATION (REPLACE THESE)
  ************************************************************/
-const WHATSAPP_TOKEN = "YOUR_META_TOKEN";
-const PHONE_NUMBER_ID = "YOUR_PHONE_ID";
+const WHATSAPP_TOKEN = "YOUR_META_TOKEN";      // 🔴 Replace
+const PHONE_NUMBER_ID = "YOUR_PHONE_ID";       // 🔴 Replace
 
 /************************************************************
- * 📡 SEND WHATSAPP MESSAGE
+ * 📡 SEND WHATSAPP MESSAGE (WITH FULL DEBUG)
  ************************************************************/
 async function sendWhatsApp(to, message) {
   const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
 
   try {
+    console.log("🚀 Sending WhatsApp message to:", to);
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -32,19 +34,18 @@ async function sendWhatsApp(to, message) {
     });
 
     const data = await response.text();
-    console.log("WhatsApp API Response:", data);
+    console.log("📡 WhatsApp API Response:", data);
 
   } catch (error) {
-    console.error("WhatsApp Send Error:", error);
+    console.error("❌ WhatsApp Send Error:", error);
   }
 }
 
 /************************************************************
- * 🧠 ANALYSIS ENGINE (SMART VERSION)
+ * 🧠 ANALYSIS ENGINE
  ************************************************************/
 function generateAnalysis(ticker) {
 
-  // 🔥 MOCK DATA (replace with API later)
   const price = (Math.random() * 100).toFixed(2);
   const momentum = ["Strong Bullish", "Moderate", "Weak"][Math.floor(Math.random()*3)];
   const signal = ["🚀 IMMINENT BREAKOUT", "🔥 PRE-BREAKOUT", "HOLD"][Math.floor(Math.random()*3)];
@@ -60,7 +61,7 @@ function generateAnalysis(ticker) {
 🎯 *Signal:* ${signal}  
 
 🧠 *Simple Breakdown*  
-This stock shows ${momentum.toLowerCase()} momentum, suggesting possible upward movement.
+This stock shows ${momentum.toLowerCase()} momentum, suggesting possible movement.
 
 ⚖️ *S.W.O.T Analysis*
 
@@ -73,45 +74,66 @@ This stock shows ${momentum.toLowerCase()} momentum, suggesting possible upward 
 
 🔵 *Opportunities*
 • Growth expansion  
-• Increased investor interest  
+• Investor interest  
 
 🔴 *Threats*
 • Competition & regulation  
-
-📰 *Market Insight*
-• Rising volume suggests smart money activity  
 
 🧭 *Verdict*
 ✅ *${verdict}*  
 
 ⚠️ *Risk Tip*
-Invest gradually. Avoid going all-in.
+Invest gradually.
 
 ✨ _Powered by Setrise Alpha Engine_`;
 }
 
 /************************************************************
- * 🚀 MAIN ANALYSIS ENDPOINT
+ * 🚀 MAIN ENDPOINT (FULL DEBUG)
  ************************************************************/
 app.post("/analyze", async (req, res) => {
   try {
+    console.log("🔥 REQUEST RECEIVED:", JSON.stringify(req.body));
+
     const { from, text } = req.body;
 
-    // Simulate heavy processing
+    // 🚨 Validate input
+    if (!from || !text) {
+      console.log("❌ Missing 'from' or 'text'");
+      return res.status(400).send("Missing fields");
+    }
+
+    console.log(`📊 Processing ticker: ${text} for user: ${from}`);
+
     const result = generateAnalysis(text);
 
+    console.log("📤 Sending result to WhatsApp...");
+
     await sendWhatsApp(from, result);
+
+    console.log("✅ DONE");
 
     res.send("DONE");
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ SERVER ERROR:", err);
     res.status(500).send("ERROR");
   }
 });
 
 /************************************************************
- * 🌍 HEALTH CHECK
+ * 🧪 TEST ENDPOINT (VERY IMPORTANT)
+ ************************************************************/
+app.get("/test", async (req, res) => {
+  const testNumber = "254714188262"; // 🔴 Replace with your number
+
+  await sendWhatsApp(testNumber, "🔥 Backend test successful!");
+
+  res.send("Test message sent");
+});
+
+/************************************************************
+ * 🌍 ROOT ENDPOINT
  ************************************************************/
 app.get("/", (req, res) => {
   res.send("NASE Alpha Engine Running 🚀");
@@ -121,4 +143,6 @@ app.get("/", (req, res) => {
  * 🚀 START SERVER
  ************************************************************/
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
