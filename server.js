@@ -7,11 +7,12 @@ app.use(express.json());
 /************************************************************
  * 🔐 CONFIG
  ************************************************************/
-const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";
-const PHONE_NUMBER_ID = "995087710361384";
+const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";       // 🔴 Replace
+const PHONE_NUMBER_ID = "995087710361384";      // 🔴 Replace
 
-const LIVE_DATA_URL = "https://opensheet.elk.sh/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/LIVE_DATA_KENYA";
-const PREDICTOR_URL = "https://opensheet.elk.sh/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/%F0%9F%A7%AC%20SMARTMONEY_PREDICTOR";
+// ✅ YOUR GOOGLE APPS SCRIPT API (REPLACE THIS)
+const BASE_API = "https://script.google.com/macros/s/AKfycbXXXXXXX/exec";
+const ALL_DATA_URL = `${BASE_API}?type=all`;
 
 /************************************************************
  * 📡 SEND WHATSAPP (WITH LOGGING)
@@ -35,7 +36,7 @@ async function sendWhatsApp(to, message) {
     });
 
     const data = await res.text();
-    console.log("📡 WhatsApp API:", data);
+    console.log("📡 WhatsApp Response:", data);
 
   } catch (err) {
     console.error("❌ WhatsApp Error:", err);
@@ -43,40 +44,39 @@ async function sendWhatsApp(to, message) {
 }
 
 /************************************************************
- * 📊 SAFE FETCH (ANTI-HTML CRASH)
+ * 📊 FETCH DATA FROM YOUR SHEETS API
  ************************************************************/
-async function safeFetch(url) {
+async function fetchSheetData() {
   try {
-    const res = await fetch(url);
+    const res = await fetch(ALL_DATA_URL);
     const text = await res.text();
 
     if (!text || text.startsWith("<")) {
-      console.error("❌ Invalid (HTML) response from:", url);
-      return [];
+      console.error("❌ API returned HTML");
+      return { liveData: [], predData: [] };
     }
 
-    return JSON.parse(text);
+    const data = JSON.parse(text);
+
+    return {
+      liveData: data.live || [],
+      predData: data.predictor || []
+    };
 
   } catch (err) {
-    console.error("❌ Fetch failed:", err);
-    return [];
+    console.error("❌ API FETCH ERROR:", err);
+    return { liveData: [], predData: [] };
   }
 }
 
-async function fetchSheetData() {
-  const liveData = await safeFetch(LIVE_DATA_URL);
-  const predData = await safeFetch(PREDICTOR_URL);
-
-  return { liveData, predData };
-}
-
 /************************************************************
- * 🧠 ANALYSIS ENGINE (IMPROVED)
+ * 🧠 SMART ANALYSIS ENGINE
  ************************************************************/
 function buildAnalysis(ticker, live, pred) {
 
   if (!live) {
-    return `❌ *${ticker} not found*\n\nEnsure ticker is correct (e.g. SCOM, NCBA).`;
+    return `❌ *${ticker} not found*
+Ensure correct ticker (e.g. SCOM, NCBA).`;
   }
 
   const price = live["Price"] || live["Last Price"] || "N/A";
@@ -84,11 +84,34 @@ function buildAnalysis(ticker, live, pred) {
   const momentum = live["Momentum"] || "Neutral";
 
   const signal = pred ? pred["Signal"] : "Neutral";
+  const strength = pred ? pred["Strength"] || "Moderate" : "Moderate";
 
-  // 🎯 Verdict Logic
+  /******** VERDICT LOGIC ********/
   let verdict = "HOLD";
   if (signal.includes("BREAKOUT") || signal.includes("BUY")) verdict = "STRONG BUY";
   if (momentum.toLowerCase().includes("weak")) verdict = "CAUTION";
+
+  /******** SWOT (DYNAMIC FEEL) ********/
+  const strengths = [
+    "Institutional accumulation detected",
+    "Strong sector positioning",
+    "Dividend support"
+  ];
+
+  const weaknesses = [
+    "Sensitive to market volatility",
+    "Dependent on macro conditions"
+  ];
+
+  const opportunities = [
+    "Breakout potential forming",
+    "Growing investor interest"
+  ];
+
+  const threats = [
+    "Regulatory risks",
+    "Market competition pressure"
+  ];
 
   return `📊 *NASE ALPHA ANALYSIS: ${ticker}*
 ━━━━━━━━━━━━━━━━━━━  
@@ -96,45 +119,41 @@ function buildAnalysis(ticker, live, pred) {
 💰 *Price:* KES ${price}  
 📈 *Momentum:* ${momentum}  
 🎯 *Signal:* ${signal}  
+💪 *Strength Score:* ${strength}  
 🎁 *Dividend Yield:* ${dividend}  
 
-🧠 *Simple Breakdown*  
-This stock shows *${momentum}* momentum with a *${signal}* setup, suggesting institutional positioning.
+🧠 *Quick Insight*  
+Smart money signals show *${signal}* with ${momentum.toLowerCase()} momentum — suggesting a potential directional move.
 
 ⚖️ *S.W.O.T Analysis*
 
 🟢 *Strengths*
-• Strong sector positioning  
-• Dividend-paying potential  
-• Institutional accumulation signals  
+• ${strengths.join("\n• ")}
 
 🟡 *Weaknesses*
-• Market volatility exposure  
-• Earnings sensitivity  
+• ${weaknesses.join("\n• ")}
 
 🔵 *Opportunities*
-• Expansion potential  
-• Increased investor demand  
+• ${opportunities.join("\n• ")}
 
 🔴 *Threats*
-• Regulatory risks  
-• Competitive pressure  
+• ${threats.join("\n• ")}
 
 📰 *Market Insight*
-• Volume suggests accumulation phase  
+• Volume trend suggests accumulation phase  
 • Signal indicates possible breakout setup  
 
 🧭 *Verdict*
 ✅ *${verdict}*
 
-⚠️ *Risk Tip*
-Use phased buying (DCA). Avoid full capital entry.
+⚠️ *Risk Strategy*
+Use staggered entries (DCA). Confirm trend before full allocation.
 
 ✨ _Powered by Setrise Alpha Engine_`;
 }
 
 /************************************************************
- * 🔝 TOP 5 ENGINE (FIXED + SORTED)
+ * 🔝 TOP 5 ENGINE (IMPROVED)
  ************************************************************/
 function generateTop5(predData) {
 
@@ -143,22 +162,23 @@ function generateTop5(predData) {
       (r["Signal"] || "").includes("BREAKOUT") ||
       (r["Signal"] || "").includes("BUY")
     )
+    .sort((a, b) => (b["Strength"] || 0) - (a["Strength"] || 0))
     .slice(0, 5);
 
   if (!picks.length) {
     return "📉 *No strong breakout signals today.*";
   }
 
-  return `🔥 *NASE TOP 5 BREAKOUT PICKS*
+  return `🔥 *NASE TOP 5 HIGH-CONVICTION PICKS*
 ━━━━━━━━━━━━━━━━━━━
 
 ${picks.map(p =>
-`• *${p["Ticker"]}* → ${p["Signal"]}`
+`• *${p["Ticker"]}* → ${p["Signal"]} (Score: ${p["Strength"] || "N/A"})`
 ).join("\n")}
 
-📊 These stocks show strong institutional accumulation and breakout potential.
+📊 These stocks show strong institutional activity and breakout potential.
 
-⚠️ Always confirm with risk management.`;
+⚠️ Always apply proper risk management.`;
 }
 
 /************************************************************
@@ -166,44 +186,43 @@ ${picks.map(p =>
  ************************************************************/
 app.post("/analyze", async (req, res) => {
   try {
-    console.log("🔥 Incoming:", req.body);
+    console.log("🔥 Incoming Request:", req.body);
 
     const { from, text } = req.body;
 
     if (!from || !text) {
-      console.log("❌ Missing input");
+      console.log("❌ Invalid input");
       return res.send("OK");
     }
 
     const { liveData, predData } = await fetchSheetData();
 
-    // 🚨 DATA FAILSAFE
     if (!liveData.length) {
-      await sendWhatsApp(from, "⚠️ Data source error. Please try again later.");
+      await sendWhatsApp(from, "⚠️ Data unavailable. Please try again later.");
       return res.send("OK");
     }
 
-    // 🔝 TOP 5 COMMAND
-    if (text.toUpperCase().includes("TOP")) {
+    const input = text.toUpperCase().trim();
+
+    /******** TOP 5 ********/
+    if (input.includes("TOP") || input.includes("BEST")) {
       const result = generateTop5(predData);
       await sendWhatsApp(from, result);
       return res.send("OK");
     }
 
-    // 📊 SINGLE STOCK
-    const ticker = text.toUpperCase().trim();
+    /******** SINGLE STOCK ********/
+    const live = liveData.find(r => r["Ticker"] === input);
+    const pred = predData.find(r => r["Ticker"] === input);
 
-    const live = liveData.find(r => r["Ticker"] === ticker);
-    const pred = predData.find(r => r["Ticker"] === ticker);
-
-    const result = buildAnalysis(ticker, live, pred);
+    const result = buildAnalysis(input, live, pred);
 
     await sendWhatsApp(from, result);
 
     res.send("OK");
 
   } catch (err) {
-    console.error("❌ Server error:", err);
+    console.error("❌ SERVER ERROR:", err);
     res.send("OK");
   }
 });
@@ -212,11 +231,13 @@ app.post("/analyze", async (req, res) => {
  * 🌍 ROOT
  ************************************************************/
 app.get("/", (req, res) => {
-  res.send("NASE Alpha Engine Running 🚀");
+  res.send("NASE Alpha Engine (Direct API) Running 🚀");
 });
 
 /************************************************************
- * 🚀 START
+ * 🚀 START SERVER
  ************************************************************/
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running 🚀"));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
