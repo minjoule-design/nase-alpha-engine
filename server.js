@@ -39,13 +39,32 @@ async function sendWhatsApp(to, message) {
  * 📊 FETCH SHEET DATA
  ************************************************************/
 async function fetchSheetData() {
-  const liveRes = await fetch(LIVE_DATA_URL);
-  const predRes = await fetch(PREDICTOR_URL);
+  try {
+    const liveRes = await fetch(LIVE_DATA_URL);
+    const predRes = await fetch(PREDICTOR_URL);
 
-  const liveData = await liveRes.json();
-  const predData = await predRes.json();
+    const liveText = await liveRes.text();
+    const predText = await predRes.text();
 
-  return { liveData, predData };
+    // 🚨 Detect HTML response
+    if (liveText.startsWith("<") || predText.startsWith("<")) {
+      console.error("❌ HTML returned instead of JSON");
+      throw new Error("Invalid sheet API response");
+    }
+
+    const liveData = JSON.parse(liveText);
+    const predData = JSON.parse(predText);
+
+    return { liveData, predData };
+
+  } catch (err) {
+    console.error("❌ SHEET FETCH ERROR:", err);
+
+    return {
+      liveData: [],
+      predData: []
+    };
+  }
 }
 
 /************************************************************
