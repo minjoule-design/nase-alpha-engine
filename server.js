@@ -11,7 +11,7 @@ const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRY
 const PHONE_NUMBER_ID = "995087710361384";      // 🔴 Replace
 
 // ✅ YOUR GOOGLE APPS SCRIPT API (REPLACE THIS)
-const BASE_API = "https://script.google.com/macros/s/AKfycbzBdZgV-JiaaWizSz86s78g9PJOVeNCEWwGT1Ow3TWj5Av8qt400FGGFSS8Xc9YvI0Rdw/exec?type=all";
+const BASE_API = "https://script.google.com/macros/s/AKfycbzBdZgV-JiaaWizSz86s78g9PJOVeNCEWwGT1Ow3TWj5Av8qt400FGGFSS8Xc9YvI0Rdw/exec";
 const ALL_DATA_URL = `${BASE_API}?type=all`;
 
 /************************************************************
@@ -48,8 +48,12 @@ async function sendWhatsApp(to, message) {
  ************************************************************/
 async function fetchSheetData() {
   try {
+    console.log("🌐 Fetching:", ALL_DATA_URL);
+
     const res = await fetch(ALL_DATA_URL);
     const text = await res.text();
+
+    console.log("📦 RAW API RESPONSE:", text.slice(0, 200));
 
     if (!text || text.startsWith("<")) {
       console.error("❌ API returned HTML");
