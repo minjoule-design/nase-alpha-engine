@@ -10,79 +10,85 @@ app.use(express.json());
 const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";
 const PHONE_NUMBER_ID = "995087710361384";
 
-// 🔗 GOOGLE SHEETS API (REPLACE WITH YOUR LINKS)
 const LIVE_DATA_URL = "https://opensheet.elk.sh/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/LIVE_DATA_KENYA";
 const PREDICTOR_URL = "https://opensheet.elk.sh/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/%F0%9F%A7%AC%20SMARTMONEY_PREDICTOR";
 
 /************************************************************
- * 📡 SEND WHATSAPP
+ * 📡 SEND WHATSAPP (WITH LOGGING)
  ************************************************************/
 async function sendWhatsApp(to, message) {
   const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
 
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${WHATSAPP_TOKEN}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: message }
-    })
-  });
-}
-
-/************************************************************
- * 📊 FETCH SHEET DATA
- ************************************************************/
-async function fetchSheetData() {
   try {
-    const liveRes = await fetch(LIVE_DATA_URL);
-    const predRes = await fetch(PREDICTOR_URL);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: message }
+      })
+    });
 
-    const liveText = await liveRes.text();
-    const predText = await predRes.text();
-
-    // 🚨 Detect HTML response
-    if (liveText.startsWith("<") || predText.startsWith("<")) {
-      console.error("❌ HTML returned instead of JSON");
-      throw new Error("Invalid sheet API response");
-    }
-
-    const liveData = JSON.parse(liveText);
-    const predData = JSON.parse(predText);
-
-    return { liveData, predData };
+    const data = await res.text();
+    console.log("📡 WhatsApp API:", data);
 
   } catch (err) {
-    console.error("❌ SHEET FETCH ERROR:", err);
-
-    return {
-      liveData: [],
-      predData: []
-    };
+    console.error("❌ WhatsApp Error:", err);
   }
 }
 
 /************************************************************
- * 🧠 BUILD ADVANCED ANALYSIS
+ * 📊 SAFE FETCH (ANTI-HTML CRASH)
+ ************************************************************/
+async function safeFetch(url) {
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+
+    if (!text || text.startsWith("<")) {
+      console.error("❌ Invalid (HTML) response from:", url);
+      return [];
+    }
+
+    return JSON.parse(text);
+
+  } catch (err) {
+    console.error("❌ Fetch failed:", err);
+    return [];
+  }
+}
+
+async function fetchSheetData() {
+  const liveData = await safeFetch(LIVE_DATA_URL);
+  const predData = await safeFetch(PREDICTOR_URL);
+
+  return { liveData, predData };
+}
+
+/************************************************************
+ * 🧠 ANALYSIS ENGINE (IMPROVED)
  ************************************************************/
 function buildAnalysis(ticker, live, pred) {
 
-  if (!live) return `❌ ${ticker} not found in database`;
+  if (!live) {
+    return `❌ *${ticker} not found*\n\nEnsure ticker is correct (e.g. SCOM, NCBA).`;
+  }
 
-  const price = live["Price"] || "N/A";
-  const dividend = live["Div Yield"] || "N/A";
+  const price = live["Price"] || live["Last Price"] || "N/A";
+  const dividend = live["Div Yield"] || live["Dividend Yield"] || "N/A";
   const momentum = live["Momentum"] || "Neutral";
 
   const signal = pred ? pred["Signal"] : "Neutral";
 
-  // 🎯 Verdict logic
+  // 🎯 Verdict Logic
   let verdict = "HOLD";
   if (signal.includes("BREAKOUT") || signal.includes("BUY")) verdict = "STRONG BUY";
+  if (momentum.toLowerCase().includes("weak")) verdict = "CAUTION";
 
   return `📊 *NASE ALPHA ANALYSIS: ${ticker}*
 ━━━━━━━━━━━━━━━━━━━  
@@ -90,64 +96,69 @@ function buildAnalysis(ticker, live, pred) {
 💰 *Price:* KES ${price}  
 📈 *Momentum:* ${momentum}  
 🎯 *Signal:* ${signal}  
-🎁 *Dividend Yield:* ${dividend}
+🎁 *Dividend Yield:* ${dividend}  
 
 🧠 *Simple Breakdown*  
-This stock is showing ${momentum.toLowerCase()} momentum with a *${signal}* setup, indicating potential smart money activity.
+This stock shows *${momentum}* momentum with a *${signal}* setup, suggesting institutional positioning.
 
 ⚖️ *S.W.O.T Analysis*
 
 🟢 *Strengths*
 • Strong sector positioning  
-• Consistent dividend potential  
+• Dividend-paying potential  
 • Institutional accumulation signals  
 
 🟡 *Weaknesses*
 • Market volatility exposure  
-• Slower earnings growth  
+• Earnings sensitivity  
 
 🔵 *Opportunities*
-• Expansion & sector growth  
+• Expansion potential  
 • Increased investor demand  
 
 🔴 *Threats*
-• Regulatory pressure  
-• Competition  
+• Regulatory risks  
+• Competitive pressure  
 
 📰 *Market Insight*
-• Volume patterns suggest accumulation  
+• Volume suggests accumulation phase  
 • Signal indicates possible breakout setup  
 
 🧭 *Verdict*
 ✅ *${verdict}*
 
 ⚠️ *Risk Tip*
-Use phased buying (DCA). Avoid full entry at once.
+Use phased buying (DCA). Avoid full capital entry.
 
 ✨ _Powered by Setrise Alpha Engine_`;
 }
 
 /************************************************************
- * 🔝 TOP 5 ENGINE
+ * 🔝 TOP 5 ENGINE (FIXED + SORTED)
  ************************************************************/
 function generateTop5(predData) {
 
   const picks = predData
     .filter(r =>
-      r["Signal"]?.includes("BREAKOUT") ||
-      r["Signal"]?.includes("BUY")
+      (r["Signal"] || "").includes("BREAKOUT") ||
+      (r["Signal"] || "").includes("BUY")
     )
     .slice(0, 5);
 
-  if (picks.length === 0) return "📉 No strong signals today.";
+  if (!picks.length) {
+    return "📉 *No strong breakout signals today.*";
+  }
 
   return `🔥 *NASE TOP 5 BREAKOUT PICKS*
+━━━━━━━━━━━━━━━━━━━
 
 ${picks.map(p =>
-`• ${p["Ticker"]} → ${p["Signal"]}`
+`• *${p["Ticker"]}* → ${p["Signal"]}`
 ).join("\n")}
 
-📊 These stocks show strong institutional activity and breakout potential.`;
+📊 These stocks show strong institutional accumulation and breakout potential.
+
+⚠️ Always confirm with risk management.`;
 }
 
 /************************************************************
@@ -155,18 +166,32 @@ ${picks.map(p =>
  ************************************************************/
 app.post("/analyze", async (req, res) => {
   try {
+    console.log("🔥 Incoming:", req.body);
+
     const { from, text } = req.body;
+
+    if (!from || !text) {
+      console.log("❌ Missing input");
+      return res.send("OK");
+    }
 
     const { liveData, predData } = await fetchSheetData();
 
-    // 🔍 Handle TOP 5
+    // 🚨 DATA FAILSAFE
+    if (!liveData.length) {
+      await sendWhatsApp(from, "⚠️ Data source error. Please try again later.");
+      return res.send("OK");
+    }
+
+    // 🔝 TOP 5 COMMAND
     if (text.toUpperCase().includes("TOP")) {
       const result = generateTop5(predData);
       await sendWhatsApp(from, result);
-      return res.send("DONE");
+      return res.send("OK");
     }
 
-    const ticker = text.toUpperCase();
+    // 📊 SINGLE STOCK
+    const ticker = text.toUpperCase().trim();
 
     const live = liveData.find(r => r["Ticker"] === ticker);
     const pred = predData.find(r => r["Ticker"] === ticker);
@@ -175,11 +200,11 @@ app.post("/analyze", async (req, res) => {
 
     await sendWhatsApp(from, result);
 
-    res.send("DONE");
+    res.send("OK");
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send("ERROR");
+    console.error("❌ Server error:", err);
+    res.send("OK");
   }
 });
 
