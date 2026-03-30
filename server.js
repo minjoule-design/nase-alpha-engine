@@ -11,8 +11,8 @@ const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRY
 const PHONE_NUMBER_ID = "995087710361384";
 
 // 🔗 GOOGLE SHEETS API (REPLACE WITH YOUR LINKS)
-const LIVE_DATA_URL = "https://docs.google.com/spreadsheets/d/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/edit?gid=1040847342#gid=1040847342";
-const PREDICTOR_URL = "https://docs.google.com/spreadsheets/d/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/edit?gid=2063631002#gid=2063631002";
+const LIVE_DATA_URL = "https://docs.google.com/spreadsheets/d/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/LIVE_DATA_KENYA";
+const PREDICTOR_URL = "https://docs.google.com/spreadsheets/d/1xcjBcp8Q45pLvo12Az0KxQ7Bb8DfqkfIhlSBJTSV84Y/🧬 SMARTMONEY_PREDICTOR";
 
 /************************************************************
  * 📡 SEND WHATSAPP
