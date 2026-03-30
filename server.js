@@ -188,7 +188,53 @@ ${picks.map(p =>
 /************************************************************
  * 🚀 MAIN ENDPOINT
  ************************************************************/
-app.post("/analyze", async (req, res) => {
+app.post("/analyze", (req, res) => {
+  try {
+    console.log("🔥 Incoming Request:", req.body);
+
+    const { from, text } = req.body;
+
+    if (!from || !text) {
+      return res.send("OK");
+    }
+
+    // ⚡ 1. RESPOND IMMEDIATELY (VERY IMPORTANT)
+    res.send("PROCESSING");
+
+    // 🚀 2. RUN HEAVY LOGIC IN BACKGROUND
+    (async () => {
+
+      const { liveData, predData } = await fetchSheetData();
+
+      if (!liveData.length) {
+        await sendWhatsApp(from, "⚠️ Data unavailable. Try again later.");
+        return;
+      }
+
+      const input = text.toUpperCase().trim();
+
+      // 🔝 TOP 5
+      if (input.includes("TOP") || input.includes("BEST")) {
+        const result = generateTop5(predData);
+        await sendWhatsApp(from, result);
+        return;
+      }
+
+      // 📊 SINGLE STOCK
+      const live = liveData.find(r => r["Ticker"] === input);
+      const pred = predData.find(r => r["Ticker"] === input);
+
+      const result = buildAnalysis(input, live, pred);
+
+      await sendWhatsApp(from, result);
+
+    })();
+
+  } catch (err) {
+    console.error("❌ SERVER ERROR:", err);
+    res.send("OK");
+  }
+});
   try {
     console.log("🔥 Incoming Request:", req.body);
 
