@@ -11,7 +11,7 @@ const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRY
 const PHONE_NUMBER_ID = "995087710361384";      // 🔴 Replace
 
 // ✅ YOUR GOOGLE APPS SCRIPT API (REPLACE THIS)
-const BASE_API = "https://script.google.com/macros/s/AKfycbXXXXXXX/exec";
+const BASE_API = "https://script.google.com/macros/s/AKfycbzBdZgV-JiaaWizSz86s78g9PJOVeNCEWwGT1Ow3TWj5Av8qt400FGGFSS8Xc9YvI0Rdw/exec?type=all";
 const ALL_DATA_URL = `${BASE_API}?type=all`;
 
 /************************************************************
