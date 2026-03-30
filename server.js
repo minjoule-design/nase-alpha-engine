@@ -7,15 +7,14 @@ app.use(express.json());
 /************************************************************
  * 🔐 CONFIG
  ************************************************************/
-const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";       // 🔴 Replace
-const PHONE_NUMBER_ID = "995087710361384";      // 🔴 Replace
+const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";
+const PHONE_NUMBER_ID = "995087710361384";
 
-// ✅ YOUR GOOGLE APPS SCRIPT API (REPLACE THIS)
 const BASE_API = "https://script.google.com/macros/s/AKfycbzBdZgV-JiaaWizSz86s78g9PJOVeNCEWwGT1Ow3TWj5Av8qt400FGGFSS8Xc9YvI0Rdw/exec";
 const ALL_DATA_URL = `${BASE_API}?type=all`;
 
 /************************************************************
- * 📡 SEND WHATSAPP (WITH LOGGING)
+ * 📡 SEND WHATSAPP
  ************************************************************/
 async function sendWhatsApp(to, message) {
   const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
@@ -44,7 +43,7 @@ async function sendWhatsApp(to, message) {
 }
 
 /************************************************************
- * 📊 FETCH DATA FROM YOUR SHEETS API
+ * 📊 FETCH DATA
  ************************************************************/
 async function fetchSheetData() {
   try {
@@ -53,10 +52,9 @@ async function fetchSheetData() {
     const res = await fetch(ALL_DATA_URL);
     const text = await res.text();
 
-    console.log("📦 RAW API RESPONSE:", text.slice(0, 200));
+    console.log("📦 RAW:", text.slice(0, 200));
 
     if (!text || text.startsWith("<")) {
-      console.error("❌ API returned HTML");
       return { liveData: [], predData: [] };
     }
 
@@ -68,129 +66,34 @@ async function fetchSheetData() {
     };
 
   } catch (err) {
-    console.error("❌ API FETCH ERROR:", err);
+    console.error("❌ API ERROR:", err);
     return { liveData: [], predData: [] };
   }
 }
 
 /************************************************************
- * 🧠 SMART ANALYSIS ENGINE
+ * 🧠 ANALYSIS
  ************************************************************/
 function buildAnalysis(ticker, live, pred) {
+  if (!live) return `❌ ${ticker} not found`;
 
-  if (!live) {
-    return `❌ *${ticker} not found*
-Ensure correct ticker (e.g. SCOM, NCBA).`;
-  }
-
-  const price = live["Price"] || live["Last Price"] || "N/A";
-  const dividend = live["Div Yield"] || live["Dividend Yield"] || "N/A";
-  const momentum = live["Momentum"] || "Neutral";
-
+  const price = live["Price"] || "N/A";
   const signal = pred ? pred["Signal"] : "Neutral";
-  const strength = pred ? pred["Strength"] || "Moderate" : "Moderate";
 
-  /******** VERDICT LOGIC ********/
-  let verdict = "HOLD";
-  if (signal.includes("BREAKOUT") || signal.includes("BUY")) verdict = "STRONG BUY";
-  if (momentum.toLowerCase().includes("weak")) verdict = "CAUTION";
+  return `📊 *${ticker} Analysis*
 
-  /******** SWOT (DYNAMIC FEEL) ********/
-  const strengths = [
-    "Institutional accumulation detected",
-    "Strong sector positioning",
-    "Dividend support"
-  ];
+💰 Price: ${price}
+🎯 Signal: ${signal}
 
-  const weaknesses = [
-    "Sensitive to market volatility",
-    "Dependent on macro conditions"
-  ];
-
-  const opportunities = [
-    "Breakout potential forming",
-    "Growing investor interest"
-  ];
-
-  const threats = [
-    "Regulatory risks",
-    "Market competition pressure"
-  ];
-
-  return `📊 *NASE ALPHA ANALYSIS: ${ticker}*
-━━━━━━━━━━━━━━━━━━━  
-
-💰 *Price:* KES ${price}  
-📈 *Momentum:* ${momentum}  
-🎯 *Signal:* ${signal}  
-💪 *Strength Score:* ${strength}  
-🎁 *Dividend Yield:* ${dividend}  
-
-🧠 *Quick Insight*  
-Smart money signals show *${signal}* with ${momentum.toLowerCase()} momentum — suggesting a potential directional move.
-
-⚖️ *S.W.O.T Analysis*
-
-🟢 *Strengths*
-• ${strengths.join("\n• ")}
-
-🟡 *Weaknesses*
-• ${weaknesses.join("\n• ")}
-
-🔵 *Opportunities*
-• ${opportunities.join("\n• ")}
-
-🔴 *Threats*
-• ${threats.join("\n• ")}
-
-📰 *Market Insight*
-• Volume trend suggests accumulation phase  
-• Signal indicates possible breakout setup  
-
-🧭 *Verdict*
-✅ *${verdict}*
-
-⚠️ *Risk Strategy*
-Use staggered entries (DCA). Confirm trend before full allocation.
-
-✨ _Powered by Setrise Alpha Engine_`;
+🧭 Verdict: ${signal.includes("BUY") ? "BUY" : "HOLD"}`;
 }
 
 /************************************************************
- * 🔝 TOP 5 ENGINE (IMPROVED)
- ************************************************************/
-function generateTop5(predData) {
-
-  const picks = predData
-    .filter(r =>
-      (r["Signal"] || "").includes("BREAKOUT") ||
-      (r["Signal"] || "").includes("BUY")
-    )
-    .sort((a, b) => (b["Strength"] || 0) - (a["Strength"] || 0))
-    .slice(0, 5);
-
-  if (!picks.length) {
-    return "📉 *No strong breakout signals today.*";
-  }
-
-  return `🔥 *NASE TOP 5 HIGH-CONVICTION PICKS*
-━━━━━━━━━━━━━━━━━━━
-
-${picks.map(p =>
-`• *${p["Ticker"]}* → ${p["Signal"]} (Score: ${p["Strength"] || "N/A"})`
-).join("\n")}
-
-📊 These stocks show strong institutional activity and breakout potential.
-
-⚠️ Always apply proper risk management.`;
-}
-
-/************************************************************
- * 🚀 MAIN ENDPOINT
+ * 🚀 MAIN ENDPOINT (FIXED)
  ************************************************************/
 app.post("/analyze", (req, res) => {
   try {
-    console.log("🔥 Incoming Request:", req.body);
+    console.log("🔥 Incoming:", req.body);
 
     const { from, text } = req.body;
 
@@ -198,78 +101,27 @@ app.post("/analyze", (req, res) => {
       return res.send("OK");
     }
 
-    // ⚡ 1. RESPOND IMMEDIATELY (VERY IMPORTANT)
+    // ✅ Instant response (fix timeout)
     res.send("PROCESSING");
 
-    // 🚀 2. RUN HEAVY LOGIC IN BACKGROUND
+    // ✅ Background execution
     (async () => {
-
       const { liveData, predData } = await fetchSheetData();
 
       if (!liveData.length) {
-        await sendWhatsApp(from, "⚠️ Data unavailable. Try again later.");
+        await sendWhatsApp(from, "⚠️ Data unavailable.");
         return;
       }
 
       const input = text.toUpperCase().trim();
 
-      // 🔝 TOP 5
-      if (input.includes("TOP") || input.includes("BEST")) {
-        const result = generateTop5(predData);
-        await sendWhatsApp(from, result);
-        return;
-      }
-
-      // 📊 SINGLE STOCK
       const live = liveData.find(r => r["Ticker"] === input);
       const pred = predData.find(r => r["Ticker"] === input);
 
       const result = buildAnalysis(input, live, pred);
 
       await sendWhatsApp(from, result);
-
     })();
-
-  } catch (err) {
-    console.error("❌ SERVER ERROR:", err);
-    res.send("OK");
-  }
-});
-  try {
-    console.log("🔥 Incoming Request:", req.body);
-
-    const { from, text } = req.body;
-
-    if (!from || !text) {
-      console.log("❌ Invalid input");
-      return res.send("OK");
-    }
-
-    const { liveData, predData } = await fetchSheetData();
-
-    if (!liveData.length) {
-      await sendWhatsApp(from, "⚠️ Data unavailable. Please try again later.");
-      return res.send("OK");
-    }
-
-    const input = text.toUpperCase().trim();
-
-    /******** TOP 5 ********/
-    if (input.includes("TOP") || input.includes("BEST")) {
-      const result = generateTop5(predData);
-      await sendWhatsApp(from, result);
-      return res.send("OK");
-    }
-
-    /******** SINGLE STOCK ********/
-    const live = liveData.find(r => r["Ticker"] === input);
-    const pred = predData.find(r => r["Ticker"] === input);
-
-    const result = buildAnalysis(input, live, pred);
-
-    await sendWhatsApp(from, result);
-
-    res.send("OK");
 
   } catch (err) {
     console.error("❌ SERVER ERROR:", err);
@@ -281,11 +133,11 @@ app.post("/analyze", (req, res) => {
  * 🌍 ROOT
  ************************************************************/
 app.get("/", (req, res) => {
-  res.send("NASE Alpha Engine (Direct API) Running 🚀");
+  res.send("NASE Alpha Engine Running 🚀");
 });
 
 /************************************************************
- * 🚀 START SERVER
+ * 🚀 START
  ************************************************************/
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
