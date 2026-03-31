@@ -7,7 +7,7 @@ app.use(express.json());
 /************************************************************
  * 🔐 CONFIG
  ************************************************************/
-const WHATSAPP_TOKEN = "EAAXBHBczDWgBRMcBdcC5BDo6FBYilC8k7NpW5MavOQcZCNt2ZCeehRYp9B42sSjEdkgmo6fsJxcvtsCJ3RVVIHmhjaZCF8tNjoaEbKTdM6QSYimsLA70ZAhdqtstBN7axs2NFHLdfkuI4b6m2rVXR5OkGZCrBsNGZChyvCXESSw5XXLhGf2faxqxmOql84prcYoqbAhJzxHKNlSeUZA46hoJ4jFfhJd4oZB7HXclrRCNaaRkA61BZBg40Rmh9m7NQGjzy5e3kRPhFsERUEyuTY2Hj1ZBG17osZD";
+const WHATSAPP_TOKEN = "EAAXBHBczDWgBRFKgrkCV1puq8Hsx0MoRgUGP3wmPHsV1R1sDnaMjDYNGq9INXRJhfHbtmq1w8wJY9gn05bTxPiJ09AqZAjyGzDOcPx69tfghZCCsmgxRXYSJEnomxJSSOVhIRZCU8GDcB6G2KqzayDV6gqLozByfyZARZCEytZCgdtwMsZCauHS5J5ydOMCIMi8yciuTBBbWMEcQmJt19OL1ulwsb8oRGj90T6XDSJi8qN9NdUJyOZCxvSL9fNyBOhnSR5N3zid2bOLouqoEdZCAM8tXL";
 const PHONE_NUMBER_ID = "995087710361384";
 
 const BASE_API = "https://script.google.com/macros/s/AKfycbzBdZgV-JiaaWizSz86s78g9PJOVeNCEWwGT1Ow3TWj5Av8qt400FGGFSS8Xc9YvI0Rdw/exec";
